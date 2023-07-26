@@ -1,0 +1,23 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  namespace: evaluations
+  name: credit
+spec:
+  predictor:
+    serviceAccountName: sa
+    minReplicas: 1
+    sklearn:
+      runtimeVersion: "1.2.3-sklearn"
+      protocolVersion: "v2"
+      resources:
+        limits:
+          cpu: 100m
+          memory: 250Mi
+        requests:
+          cpu: 100m
+          memory: 250Mi
+      storageUri: s3://models/credit-scorer
+    logger:
+      mode: all
+      url: http://broker-ingress.knative-eventing.svc.cluster.local/panoptes/default

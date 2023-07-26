@@ -1,0 +1,55 @@
+FeatureStore{
+	features
+	    sex
+	labels 
+	    credit_label
+}
+Model credit-nb{
+    uses sex
+    outputs credit_prediction
+    predicts credit_label
+}
+BaseAlgorithm l-infinity{
+    codebase "https://github.com/pkourouklidis/l-infinity-algorithm"
+    runtime pythonFunction
+    severity levels 2
+    parameters threshold:Real
+}
+
+BaseAlgorithm accuracy-check{
+	codebase "https://github.com/pkourouklidis/accuracy-algorithm"
+	runtime pythonFunction
+	severity levels 2
+	parameters threshold:Real
+}
+
+Deployment credit{
+	model credit-nb
+	
+	BaseAlgorithmExecution l_inf_sex{
+		algorithm l-infinity
+		live data sex
+		historical data sex
+		actions 1->emailMe
+		parameter values threshold = 0.10
+	}
+	
+	BaseAlgorithmExecution credit-accuracy-check{
+	    algorithm accuracy-check
+	    live data credit_label, credit_prediction
+	    actions 1->emailMe
+	    parameter values threshold = 0.60
+	}
+	
+	ActionExecution emailMe{
+		action email
+		parameter values email=panagiotis.kourouklidis@bt.com
+	}
+	
+	
+	Trigger t4{
+	every
+	200 labels
+	execute credit-accuracy-check
+	}
+}

@@ -1,0 +1,22 @@
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  namespace: evaluations
+  name: dogs
+spec:
+  predictor:
+    serviceAccountName: sa
+    minReplicas: 1
+    triton:
+      runtimeVersion: "22.11-py3"
+      resources:
+        limits:
+          cpu: 1
+          memory: 1Gi
+        requests:
+          cpu: 1
+          memory: 1Gi
+      storageUri: s3://models/efficientNetB0/pt
+    logger:
+      mode: all
+      url: http://broker-ingress.knative-eventing.svc.cluster.local/panoptes/default

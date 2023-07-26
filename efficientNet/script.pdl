@@ -1,0 +1,61 @@
+FeatureStore{
+    features
+        dog_input
+    labels 
+	    dog_label
+}
+
+Model dogs-efficientnet{
+    uses dog_input
+    outputs dog_prediction
+    predicts dog_label
+}
+
+BaseAlgorithm luma-check{
+    codebase "https://github.com/pkourouklidis/luma-check-algorithm"
+    runtime pythonFunction
+    severity levels 2
+    parameters pValue:Real
+}
+
+BaseAlgorithm accuracy-check{
+	codebase "https://github.com/pkourouklidis/accuracy-algorithm"
+	runtime pythonFunction
+	severity levels 2
+	parameters threshold:Real
+}
+
+Deployment dogs{
+    model dogs-efficientnet
+    
+    BaseAlgorithmExecution luma-check-dogs{
+		algorithm luma-check
+		live data dog_input
+		historical data dog_input
+		actions 1->emailMe
+		parameter values pValue = 0.05
+	}
+	
+	BaseAlgorithmExecution accuracy-check-dogs{
+		algorithm accuracy-check
+		live data dog_prediction, dog_label
+		parameter values threshold = 0.6
+		actions 1->emailMeDogs
+	}
+	
+	ActionExecution emailMeDogs{
+		action email
+		parameter values email=panagiotis.kourouklidis@bt.com
+	}
+	
+	Trigger s5{
+	every
+	20 samples
+	execute luma-check-dogs
+	}
+	
+	Trigger s6{
+	every
+	20 labels
+	execute accuracy-check-dogs
+	}

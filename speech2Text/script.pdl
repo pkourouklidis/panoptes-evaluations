@@ -1,0 +1,63 @@
+FeatureStore{
+    features
+        input
+    labels 
+	    label
+}
+
+Model stt-silero{
+    uses input
+    outputs prediction
+    predicts label
+}
+
+BaseAlgorithm snr-check{
+    codebase "https://github.com/pkourouklidis/SNR-check"
+    runtime pythonFunction
+    severity levels 2
+    parameters pValue:Real
+}
+
+BaseAlgorithm wer-check{
+    codebase "https://github.com/pkourouklidis/word-error-rate-algorithm"
+    runtime pythonFunction
+    severity levels 2
+    parameters threshold:Real
+}
+
+Deployment stt{
+    model stt-silero
+    
+    BaseAlgorithmExecution snr-check-stt{
+		algorithm snr-check
+		live data input
+		historical data input
+		actions 1->emailMe
+		parameter values pValue = 0.05
+	}
+	
+	BaseAlgorithmExecution wer-check-stt{
+		algorithm wer-check
+		live data prediction, label
+		parameter values threshold = 0.3
+		actions 1->emailMeStt
+	}
+	
+	ActionExecution emailMeStt{
+		action email
+		parameter values email=panagiotis.kourouklidis@bt.com
+	}
+	
+	Trigger t3{
+	every
+	100 samples
+	execute snr-check-stt
+	}
+	
+	Trigger t4{
+	every
+	100 labels
+	execute wer-check-stt
+	}
+	
+}
